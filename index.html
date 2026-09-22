@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Troca de Filtros dos Injetores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gv-green:#00A651;
+    --gv-green-dark:#00863F;
+    --bg:#f4f7f5;
+    --card:#ffffff;
+    --text:#1a2b22;
+    --text-muted:#5c6b62;
+    --border:#e3e9e5;
+    --ok:#00c875;
+    --warn:#fdab3d;
+    --late:#df2f4a;
+    --pending:#757575;
+    --shadow:0 1px 3px rgba(0,30,15,0.06), 0 1px 2px rgba(0,30,15,0.04);
+  }
+  :root:not([data-theme="light"]){
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1613;
+      --card:#161f1a;
+      --text:#eef3f0;
+      --text-muted:#9db0a5;
+      --border:#25332c;
+      --shadow:0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1613;
+    --card:#161f1a;
+    --text:#eef3f0;
+    --text-muted:#9db0a5;
+    --border:#25332c;
+    --shadow:0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:1280px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:24px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand-mark{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,var(--gv-green),var(--gv-green-dark));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:18px;flex-shrink:0;
+  }
+  h1{font-size:20px;font-weight:800;margin:0;letter-spacing:-0.01em;}
+  .subtitle{font-size:13px;color:var(--text-muted);margin-top:2px;}
+  .updated{
+    font-size:12px;color:var(--text-muted);
+    background:var(--card);border:1px solid var(--border);
+    padding:8px 14px;border-radius:10px;box-shadow:var(--shadow);
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 18px;
+    box-shadow:var(--shadow);
+  }
+  .card .label{
+    font-size:12px;
+    color:var(--text-muted);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .card .value{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:30px;
+    margin-top:6px;
+    color:var(--text);
+  }
+  .card .value.green{color:var(--ok);}
+  .card .sub{font-size:12px;color:var(--text-muted);margin-top:4px;}
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .panel h2{
+    font-size:15px;
+    margin:0 0 14px 0;
+    font-weight:700;
+  }
+
+  .status-bar{
+    display:flex;
+    height:14px;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--border);
+    margin-bottom:12px;
+  }
+  .status-bar span{height:100%;}
+  .legend{
+    display:flex;flex-wrap:wrap;gap:14px;
+    font-size:12.5px;color:var(--text-muted);
+  }
+  .legend .dot{
+    display:inline-block;width:9px;height:9px;border-radius:50%;
+    margin-right:6px;vertical-align:middle;
+  }
+
+  .toolbar{
+    display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+  }
+  .toolbar input, .toolbar select{
+    font-family:inherit;
+    font-size:13px;
+    padding:9px 12px;
+    border-radius:9px;
+    border:1px solid var(--border);
+    background:var(--bg);
+    color:var(--text);
+    outline:none;
+  }
+  .toolbar input{flex:1;min-width:180px;}
+  .toolbar select{cursor:pointer;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--text-muted);
+    font-weight:700;
+    padding:10px 12px;
+    border-bottom:2px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  tbody tr:hover{background:rgba(0,166,81,0.05);}
+  .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .qtd{font-family:'JetBrains Mono',monospace;font-weight:600;}
+  .om{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 10px;border-radius:999px;
+    font-size:11.5px;font-weight:700;
+    white-space:nowrap;
+  }
+  .badge .dot{width:7px;height:7px;border-radius:50%;margin:0;}
+  .badge.ok{background:rgba(0,200,117,0.14);color:#00a35f;}
+  .badge.warn{background:rgba(253,171,61,0.16);color:#c47613;}
+  .badge.late{background:rgba(223,47,74,0.14);color:#df2f4a;}
+  .badge.pending{background:rgba(117,117,117,0.16);color:#757575;}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .badge.ok{color:#3fe08d;}
+    :root:not([data-theme="light"]) .badge.warn{color:#fdab3d;}
+  }
+  :root[data-theme="dark"] .badge.ok{color:#3fe08d;}
+  :root[data-theme="dark"] .badge.warn{color:#fdab3d;}
+
+  .freq{
+    font-size:11.5px;
+    padding:3px 9px;
+    border-radius:7px;
+    background:rgba(0,166,81,0.1);
+    color:var(--gv-green-dark);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .freq{color:#5fd692;}
+  }
+  :root[data-theme="dark"] .freq{color:#5fd692;}
+
+  .table-scroll{overflow-x:auto;}
+  footer{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--text-muted);
+    margin-top:30px;
+  }
+  .empty-row td{
+    text-align:center;
+    color:var(--text-muted);
+    padding:30px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">GV</div>
+      <div>
+        <h1>Controle de Troca de Filtros dos Injetores</h1>
+        <div class="subtitle">Manutenção Preventiva · PCM Goiás Verde</div>
+      </div>
+    </div>
+    <div class="updated" id="updated-at">—</div>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Locais Monitorados</div>
+      <div class="value" id="kpi-total">–</div>
+      <div class="sub">pontos de troca cadastrados</div>
+    </div>
+    <div class="card">
+      <div class="label">Filtros no Total</div>
+      <div class="value" id="kpi-filtros">–</div>
+      <div class="sub">unidades somadas de todos os locais</div>
+    </div>
+    <div class="card">
+      <div class="label">Trocas Concluídas</div>
+      <div class="value green" id="kpi-concluidos">–</div>
+      <div class="sub" id="kpi-concluidos-pct">–</div>
+    </div>
+    <div class="card">
+      <div class="label">Próxima Execução</div>
+      <div class="value" style="font-size:22px;" id="kpi-proxima">–</div>
+      <div class="sub" id="kpi-proxima-sub">–</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Status das Trocas</h2>
+    <div class="status-bar" id="status-bar"></div>
+    <div class="legend" id="status-legend"></div>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Buscar por local ou tag (ex.: AUTOCLAVE, INJ-RC-01)...">
+      <select id="filter-status">
+        <option value="">Todos os status</option>
+      </select>
+      <select id="filter-freq">
+        <option value="">Todas as frequências</option>
+      </select>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Local</th>
+            <th>Tag</th>
+            <th>Filtros</th>
+            <th>Frequência</th>
+            <th>Última Execução</th>
+            <th>Próxima Execução</th>
+            <th>Status</th>
+            <th>Ordem de Manutenção</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Dados sincronizados do board "Controle de Troca de Filtros dos Injetores" (Monday.com) · Goiás Verde
+  </footer>
+</div>
+
+<script>
+let DATA = [];
+let GENERATED_AT = null;
+
+const STATUS_COLORS = {
+  "Concluído": {hex:"#00c875", cls:"ok"},
+  "Em Progresso": {hex:"#fdab3d", cls:"warn"},
+  "Atrasado": {hex:"#df2f4a", cls:"late"},
+  "Pendente": {hex:"#757575", cls:"pending"}
+};
+
+function formatDate(iso){
+  if(!iso) return "—";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function renderKPIs(){
+  const total = DATA.length;
+  const totalFiltros = DATA.reduce((s,i)=>s+i.qtd,0);
+  const concluidos = DATA.filter(i=>i.status==="Concluído").length;
+  const pct = total ? Math.round((concluidos/total)*100) : 0;
+
+  document.getElementById("kpi-total").textContent = total;
+  document.getElementById("kpi-filtros").textContent = totalFiltros;
+  document.getElementById("kpi-concluidos").textContent = concluidos + "/" + total;
+  document.getElementById("kpi-concluidos-pct").textContent = pct + "% do total já trocado";
+
+  // próxima execução mais próxima
+  const proximas = DATA.map(i=>i.proxima).filter(Boolean).sort();
+  if(proximas.length){
+    document.getElementById("kpi-proxima").textContent = formatDate(proximas[0]);
+    const diffDays = Math.round((new Date(proximas[0]) - new Date()) / 86400000);
+    document.getElementById("kpi-proxima-sub").textContent = diffDays >= 0
+      ? `em ${diffDays} dias`
+      : `atrasada há ${Math.abs(diffDays)} dias`;
+  }
+}
+
+function renderStatusBar(){
+  const counts = {};
+  DATA.forEach(i => counts[i.status] = (counts[i.status]||0) + 1);
+  const total = DATA.length;
+  const bar = document.getElementById("status-bar");
+  const legend = document.getElementById("status-legend");
+  bar.innerHTML = "";
+  legend.innerHTML = "";
+
+  Object.entries(counts).forEach(([status,count])=>{
+    const color = (STATUS_COLORS[status] || STATUS_COLORS["Pendente"]).hex;
+    const pct = (count/total*100).toFixed(1);
+    const seg = document.createElement("span");
+    seg.style.width = pct + "%";
+    seg.style.background = color;
+    bar.appendChild(seg);
+
+    const item = document.createElement("span");
+    item.innerHTML = `<span class="dot" style="background:${color}"></span>${status}: <strong style="font-family:'JetBrains Mono',monospace">${count}</strong> (${pct}%)`;
+    legend.appendChild(item);
+  });
+}
+
+function populateFilters(){
+  const statusSel = document.getElementById("filter-status");
+  const freqSel = document.getElementById("filter-freq");
+  const statuses = [...new Set(DATA.map(i=>i.status))];
+  const freqs = [...new Set(DATA.map(i=>i.freq))];
+
+  statuses.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    statusSel.appendChild(opt);
+  });
+  freqs.forEach(f=>{
+    const opt = document.createElement("option");
+    opt.value = f; opt.textContent = f;
+    freqSel.appendChild(opt);
+  });
+}
+
+function renderTable(){
+  const search = document.getElementById("search").value.trim().toLowerCase();
+  const statusFilter = document.getElementById("filter-status").value;
+  const freqFilter = document.getElementById("filter-freq").value;
+  const tbody = document.getElementById("table-body");
+
+  const filtered = DATA.filter(i=>{
+    const matchesSearch = !search ||
+      i.local.toLowerCase().includes(search) ||
+      i.tag.toLowerCase().includes(search);
+    const matchesStatus = !statusFilter || i.status === statusFilter;
+    const matchesFreq = !freqFilter || i.freq === freqFilter;
+    return matchesSearch && matchesStatus && matchesFreq;
+  });
+
+  tbody.innerHTML = "";
+
+  if(!filtered.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">Nenhum local encontrado.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach(i=>{
+    const st = STATUS_COLORS[i.status] || STATUS_COLORS["Pendente"];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i.local}</td>
+      <td class="tag">${i.tag}</td>
+      <td class="qtd">${i.qtd}</td>
+      <td><span class="freq">${i.freq}</span></td>
+      <td>${formatDate(i.ultima)}</td>
+      <td>${formatDate(i.proxima)}</td>
+      <td><span class="badge ${st.cls}"><span class="dot" style="background:${st.hex}"></span>${i.status}</span></td>
+      <td class="om">${i.om ? i.om : "—"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderUpdatedAt(){
+  const el = document.getElementById("updated-at");
+  if(!GENERATED_AT){
+    el.textContent = "Sem data de atualização";
+    return;
+  }
+  const d = new Date(GENERATED_AT);
+  el.textContent = "Dados de " + d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+
+function renderAll(){
+  renderKPIs();
+  renderStatusBar();
+  populateFilters();
+  renderTable();
+  renderUpdatedAt();
+}
+
+document.getElementById("search").addEventListener("input", renderTable);
+document.getElementById("filter-status").addEventListener("change", renderTable);
+document.getElementById("filter-freq").addEventListener("change", renderTable);
+
+fetch("data.json?_=" + Date.now())
+  .then(r => {
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then(payload => {
+    DATA = payload.items || [];
+    GENERATED_AT = payload.generated_at || null;
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById("table-body").innerHTML =
+      `<tr class="empty-row"><td colspan="8">Não foi possível carregar data.json (${err.message}). Verifique se o GitHub Actions já rodou pelo menos uma vez.</td></tr>`;
+    document.getElementById("updated-at").textContent = "Erro ao carregar dados";
+  });
+</script>
+</body>
+</html>
